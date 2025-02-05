@@ -123,3 +123,26 @@
                     })
                 (ok true))
             (err u5))))
+
+
+(define-map work-categories
+    { hash: (buff 32) }
+    { 
+        category: (string-utf8 50),
+        tags: (list 10 (string-utf8 20))
+    })
+
+(define-public (add-work-category
+    (hash (buff 32))
+    (category (string-utf8 50))
+    (tags (list 10 (string-utf8 20))))
+    (let ((work (map-get? ip-registry {hash: hash})))
+        (if (and
+            (is-some work)
+            (is-eq (get owner (unwrap-panic work)) tx-sender))
+            (begin
+                (map-set work-categories
+                    {hash: hash}
+                    {category: category, tags: tags})
+                (ok true))
+            (err u6))))
