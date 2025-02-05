@@ -205,3 +205,34 @@
                     })
                 (ok true))
             (err u8))))
+
+
+
+
+
+
+(define-map revenue-shares
+    { hash: (buff 32), participant: principal }
+    {
+        percentage: uint,
+        total-received: uint
+    })
+
+(define-public (set-revenue-share
+    (hash (buff 32))
+    (participant principal)
+    (share-percentage uint))
+    (let ((work (map-get? ip-registry {hash: hash})))
+        (if (and
+            (is-some work)
+            (is-eq (get owner (unwrap-panic work)) tx-sender)
+            (<= share-percentage u100))
+            (begin
+                (map-set revenue-shares
+                    {hash: hash, participant: participant}
+                    {
+                        percentage: share-percentage,
+                        total-received: u0
+                    })
+                (ok true))
+            (err u9))))
