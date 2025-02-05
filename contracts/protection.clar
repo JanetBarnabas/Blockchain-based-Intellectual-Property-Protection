@@ -146,3 +146,33 @@
                     {category: category, tags: tags})
                 (ok true))
             (err u6))))
+
+
+
+(define-map collaborators
+    { hash: (buff 32), collaborator: principal }
+    {
+        role: (string-utf8 50),
+        permissions: (list 5 (string-utf8 20)),
+        added-at: uint
+    })
+
+(define-public (add-collaborator
+    (hash (buff 32))
+    (collaborator principal)
+    (role (string-utf8 50))
+    (permissions (list 5 (string-utf8 20))))
+    (let ((work (map-get? ip-registry {hash: hash})))
+        (if (and
+            (is-some work)
+            (is-eq (get owner (unwrap-panic work)) tx-sender))
+            (begin
+                (map-set collaborators
+                    {hash: hash, collaborator: collaborator}
+                    {
+                        role: role,
+                        permissions: permissions,
+                        added-at: stacks-block-height
+                    })
+                (ok true))
+            (err u7))))
