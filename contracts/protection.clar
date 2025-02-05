@@ -63,3 +63,33 @@
                     (merge (unwrap-panic registration) {owner: new-owner}))
                 (ok true))
             (err u3))))
+
+
+
+(define-map version-registry
+    { hash: (buff 32), version: uint }
+    { 
+        updated-hash: (buff 32),
+        update-notes: (string-utf8 200),
+        timestamp: uint
+    })
+
+(define-public (register-new-version 
+    (original-hash (buff 32)) 
+    (new-hash (buff 32)) 
+    (version uint)
+    (notes (string-utf8 200)))
+    (let ((original-work (map-get? ip-registry {hash: original-hash})))
+        (if (and 
+            (is-some original-work)
+            (is-eq (get owner (unwrap-panic original-work)) tx-sender))
+            (begin
+                (map-set version-registry
+                    {hash: original-hash, version: version}
+                    {
+                        updated-hash: new-hash,
+                        update-notes: notes,
+                        timestamp: stacks-block-height
+                    })
+                (ok true))
+            (err u4))))
