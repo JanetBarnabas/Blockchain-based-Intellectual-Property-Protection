@@ -93,3 +93,33 @@
                     })
                 (ok true))
             (err u4))))
+
+
+
+(define-map licenses
+    { work-hash: (buff 32), licensee: principal }
+    {
+        expiry: uint,
+        terms: (string-utf8 200),
+        active: bool
+    })
+
+(define-public (grant-license 
+    (hash (buff 32)) 
+    (licensee principal)
+    (duration uint)
+    (terms (string-utf8 200)))
+    (let ((work (map-get? ip-registry {hash: hash})))
+        (if (and
+            (is-some work)
+            (is-eq (get owner (unwrap-panic work)) tx-sender))
+            (begin
+                (map-set licenses
+                    {work-hash: hash, licensee: licensee}
+                    {
+                        expiry: (+ stacks-block-height duration),
+                        terms: terms,
+                        active: true
+                    })
+                (ok true))
+            (err u5))))
