@@ -49,3 +49,17 @@
         )
     )
 )
+
+
+
+(define-public (transfer-ownership (hash (buff 32)) (new-owner principal))
+    (let ((registration (map-get? ip-registry {hash: hash})))
+        (if (and 
+            (is-some registration)
+            (is-eq (get owner (unwrap-panic registration)) tx-sender))
+            (begin 
+                (map-set ip-registry 
+                    {hash: hash}
+                    (merge (unwrap-panic registration) {owner: new-owner}))
+                (ok true))
+            (err u3))))
