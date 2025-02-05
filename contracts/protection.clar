@@ -176,3 +176,32 @@
                     })
                 (ok true))
             (err u7))))
+
+
+
+(define-map work-status
+    { hash: (buff 32) }
+    {
+        status: (string-utf8 20),
+        visibility: bool,
+        last-updated: uint
+    })
+
+(define-public (update-work-status
+    (hash (buff 32))
+    (status (string-utf8 20))
+    (visibility bool))
+    (let ((work (map-get? ip-registry {hash: hash})))
+        (if (and
+            (is-some work)
+            (is-eq (get owner (unwrap-panic work)) tx-sender))
+            (begin
+                (map-set work-status
+                    {hash: hash}
+                    {
+                        status: status,
+                        visibility: visibility,
+                        last-updated: stacks-block-height
+                    })
+                (ok true))
+            (err u8))))
