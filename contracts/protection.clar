@@ -332,3 +332,113 @@
 (define-read-only (get-version-details (hash (buff 32)) (version uint))
     (map-get? version-registry {hash: hash, version: version})
 )
+
+
+
+(define-map disputes
+    { work-hash: (buff 32), disputant: principal }
+    {
+        reason: (string-utf8 500),
+        evidence: (buff 32),
+        status: (string-utf8 20),
+        filed-at: uint,
+        resolved-at: uint
+    }
+)
+
+(define-map arbitrators
+    { address: principal }
+    { active: bool }
+)
+
+(define-public (file-dispute 
+    (work-hash (buff 32))
+    (reason (string-utf8 500))
+    (evidence (buff 32)))
+    (let ((work (map-get? ip-registry {hash: work-hash})))
+        (if (is-some work)
+            (begin
+                (map-set disputes
+                    {work-hash: work-hash, disputant: tx-sender}
+                    {
+                        reason: reason,
+                        evidence: evidence,
+                        status: u"PENDING",
+                        filed-at: stacks-block-height,
+                        resolved-at: u0
+                    })
+                (ok true))
+            (err u100)
+        )
+    )
+)
+
+(define-public (resolve-dispute
+    (work-hash (buff 32))
+    (disputant principal)
+    (resolution (string-utf8 20)))
+    (let ((dispute (map-get? disputes {work-hash: work-hash, disputant: disputant}))
+          (arbitrator-status (map-get? arbitrators {address: tx-sender})))
+        (if (and 
+                (is-some dispute)
+                (is-some arbitrator-status)
+                (get active (unwrap-panic arbitrator-status)))
+            (begin
+                (map-set disputes
+                    {work-hash: work-hash, disputant: disputant}
+                    (merge (unwrap-panic dispute)
+                        {
+                            status: resolution,
+                            resolved-at: stacks-block-height
+                        }))
+                (ok true))
+            (err u101)
+        )
+    )
+)
+
+
+(define-map usage-metrics
+    { work-hash: (buff 32) }
+    {
+        views: uint,
+        shares: uint,
+        citations: uint,
+        last-updated: uint
+    }
+)
+
+(define-map platform-usage
+    { work-hash: (buff 32), platform: (string-utf8 50) }
+    {
+        usage-count: uint,
+        first-used: uint,
+        last-used: uint
+    }
+)
+
+(define-public (record-usage
+    (work-hash (buff 32))
+    (platform (string-utf8 50)))
+    (let ((current-metrics (map-get? usage-metrics {work-hash: work-hash}))
+          (platform-metrics (map-get? platform-usage {work-hash: work-hash, platform: platform})))
+        (begin
+            (map-set usage-metrics
+                {work-hash: work-hash}
+                {
+                    views: (+ (default-to u0 (get views current-metrics)) u1),
+                    shares: (default-to u0 (get shares current-metrics)),
+                    citations: (default-to u0 (get citations current-metrics)),
+                    last-updated: stacks-block-height
+                })
+            (map-set platform-usage
+                {work-hash: work-hash, platform: platform}
+                {
+                    usage-count: (+ (default-to u0 (get usage-count platform-metrics)) u1),
+                    first-used: (default-to stacks-block-height (get first-used platform-metrics)),
+                    last-used: stacks-block-height
+                })
+            (ok true)
+        )
+    )
+)
