@@ -13,8 +13,7 @@
 
 ;; Public Functions
 (define-public (register-work (hash (buff 32)) (title (string-utf8 100)) (description (string-utf8 500)))
-    (let
-        ((existing-registration (map-get? ip-registry {hash: hash})))
+    (let ((existing-registration (map-get? ip-registry {hash: hash})))
         (if (is-some existing-registration)
             (err u1) ;; Work already registered
             (begin
@@ -50,21 +49,20 @@
     )
 )
 
-
-
 (define-public (transfer-ownership (hash (buff 32)) (new-owner principal))
     (let ((registration (map-get? ip-registry {hash: hash})))
         (if (and 
-            (is-some registration)
-            (is-eq (get owner (unwrap-panic registration)) tx-sender))
+                (is-some registration)
+                (is-eq (get owner (unwrap-panic registration)) tx-sender))
             (begin 
                 (map-set ip-registry 
                     {hash: hash}
                     (merge (unwrap-panic registration) {owner: new-owner}))
                 (ok true))
-            (err u3))))
-
-
+            (err u3)
+        )
+    )
+)
 
 (define-map version-registry
     { hash: (buff 32), version: uint }
@@ -72,7 +70,8 @@
         updated-hash: (buff 32),
         update-notes: (string-utf8 200),
         timestamp: uint
-    })
+    }
+)
 
 (define-public (register-new-version 
     (original-hash (buff 32)) 
@@ -81,8 +80,8 @@
     (notes (string-utf8 200)))
     (let ((original-work (map-get? ip-registry {hash: original-hash})))
         (if (and 
-            (is-some original-work)
-            (is-eq (get owner (unwrap-panic original-work)) tx-sender))
+                (is-some original-work)
+                (is-eq (get owner (unwrap-panic original-work)) tx-sender))
             (begin
                 (map-set version-registry
                     {hash: original-hash, version: version}
@@ -92,9 +91,10 @@
                         timestamp: stacks-block-height
                     })
                 (ok true))
-            (err u4))))
-
-
+            (err u4)
+        )
+    )
+)
 
 (define-map licenses
     { work-hash: (buff 32), licensee: principal }
@@ -102,7 +102,8 @@
         expiry: uint,
         terms: (string-utf8 200),
         active: bool
-    })
+    }
+)
 
 (define-public (grant-license 
     (hash (buff 32)) 
@@ -111,8 +112,8 @@
     (terms (string-utf8 200)))
     (let ((work (map-get? ip-registry {hash: hash})))
         (if (and
-            (is-some work)
-            (is-eq (get owner (unwrap-panic work)) tx-sender))
+                (is-some work)
+                (is-eq (get owner (unwrap-panic work)) tx-sender))
             (begin
                 (map-set licenses
                     {work-hash: hash, licensee: licensee}
@@ -122,15 +123,18 @@
                         active: true
                     })
                 (ok true))
-            (err u5))))
-
+            (err u5)
+        )
+    )
+)
 
 (define-map work-categories
     { hash: (buff 32) }
     { 
         category: (string-utf8 50),
         tags: (list 10 (string-utf8 20))
-    })
+    }
+)
 
 (define-public (add-work-category
     (hash (buff 32))
@@ -138,16 +142,17 @@
     (tags (list 10 (string-utf8 20))))
     (let ((work (map-get? ip-registry {hash: hash})))
         (if (and
-            (is-some work)
-            (is-eq (get owner (unwrap-panic work)) tx-sender))
+                (is-some work)
+                (is-eq (get owner (unwrap-panic work)) tx-sender))
             (begin
                 (map-set work-categories
                     {hash: hash}
                     {category: category, tags: tags})
                 (ok true))
-            (err u6))))
-
-
+            (err u6)
+        )
+    )
+)
 
 (define-map collaborators
     { hash: (buff 32), collaborator: principal }
@@ -155,7 +160,8 @@
         role: (string-utf8 50),
         permissions: (list 5 (string-utf8 20)),
         added-at: uint
-    })
+    }
+)
 
 (define-public (add-collaborator
     (hash (buff 32))
@@ -164,8 +170,8 @@
     (permissions (list 5 (string-utf8 20))))
     (let ((work (map-get? ip-registry {hash: hash})))
         (if (and
-            (is-some work)
-            (is-eq (get owner (unwrap-panic work)) tx-sender))
+                (is-some work)
+                (is-eq (get owner (unwrap-panic work)) tx-sender))
             (begin
                 (map-set collaborators
                     {hash: hash, collaborator: collaborator}
@@ -175,9 +181,10 @@
                         added-at: stacks-block-height
                     })
                 (ok true))
-            (err u7))))
-
-
+            (err u7)
+        )
+    )
+)
 
 (define-map work-status
     { hash: (buff 32) }
@@ -185,7 +192,8 @@
         status: (string-utf8 20),
         visibility: bool,
         last-updated: uint
-    })
+    }
+)
 
 (define-public (update-work-status
     (hash (buff 32))
@@ -193,8 +201,8 @@
     (visibility bool))
     (let ((work (map-get? ip-registry {hash: hash})))
         (if (and
-            (is-some work)
-            (is-eq (get owner (unwrap-panic work)) tx-sender))
+                (is-some work)
+                (is-eq (get owner (unwrap-panic work)) tx-sender))
             (begin
                 (map-set work-status
                     {hash: hash}
@@ -204,19 +212,18 @@
                         last-updated: stacks-block-height
                     })
                 (ok true))
-            (err u8))))
-
-
-
-
-
+            (err u8)
+        )
+    )
+)
 
 (define-map revenue-shares
     { hash: (buff 32), participant: principal }
     {
         percentage: uint,
         total-received: uint
-    })
+    }
+)
 
 (define-public (set-revenue-share
     (hash (buff 32))
@@ -224,9 +231,9 @@
     (share-percentage uint))
     (let ((work (map-get? ip-registry {hash: hash})))
         (if (and
-            (is-some work)
-            (is-eq (get owner (unwrap-panic work)) tx-sender)
-            (<= share-percentage u100))
+                (is-some work)
+                (is-eq (get owner (unwrap-panic work)) tx-sender)
+                (<= share-percentage u100))
             (begin
                 (map-set revenue-shares
                     {hash: hash, participant: participant}
@@ -235,4 +242,327 @@
                         total-received: u0
                     })
                 (ok true))
-            (err u9))))
+            (err u9)
+        )
+    )
+)
+
+
+
+(define-public (update-work-metadata (hash (buff 32)) (new-title (string-utf8 100)) (new-description (string-utf8 500)))
+    (let ((reg (map-get? ip-registry {hash: hash})))
+      (if (and 
+            (is-some reg)
+            (is-eq (get owner (unwrap-panic reg)) tx-sender))
+          (begin
+             (map-set ip-registry 
+                {hash: hash}
+                {
+                  owner: (get owner (unwrap-panic reg)),
+                  timestamp: (get timestamp (unwrap-panic reg)),
+                  title: new-title,
+                  description: new-description
+                })
+             (ok true))
+          (err u11)
+      )
+    )
+)
+
+(define-public (remove-collaborator (hash (buff 32)) (collaborator principal))
+    (let ((work (map-get? ip-registry {hash: hash})))
+      (if (and 
+            (is-some work)
+            (is-eq (get owner (unwrap-panic work)) tx-sender))
+          (begin
+             (map-delete collaborators {hash: hash, collaborator: collaborator})
+             (ok true))
+          (err u12)
+      )
+    )
+)
+
+(define-public (extend-license (hash (buff 32)) (licensee principal) (additional-duration uint))
+    (let (
+          (work (map-get? ip-registry {hash: hash}))
+          (license (map-get? licenses {work-hash: hash, licensee: licensee}))
+         )
+      (if (and 
+            (is-some work)
+            (is-eq (get owner (unwrap-panic work)) tx-sender)
+            (is-some license))
+          (begin
+             (let ((old-expiry (get expiry (unwrap-panic license))))
+                  (map-set licenses 
+                    {work-hash: hash, licensee: licensee}
+                    {
+                      expiry: (+ old-expiry additional-duration),
+                      terms: (get terms (unwrap-panic license)),
+                      active: true
+                    }
+                  )
+             )
+             (ok true))
+          (err u13)
+      )
+    )
+)
+
+(define-public (cancel-revenue-share (hash (buff 32)) (participant principal))
+    (let ((work (map-get? ip-registry {hash: hash})))
+      (if (and
+            (is-some work)
+            (is-eq (get owner (unwrap-panic work)) tx-sender))
+          (begin
+             (map-delete revenue-shares {hash: hash, participant: participant})
+             (ok true))
+          (err u14)
+      )
+    )
+)
+
+(define-read-only (get-license-details (hash (buff 32)) (licensee principal))
+    (map-get? licenses {work-hash: hash, licensee: licensee})
+)
+
+(define-read-only (get-collaborator-details (hash (buff 32)) (collaborator principal))
+    (map-get? collaborators {hash: hash, collaborator: collaborator})
+)
+
+(define-read-only (get-version-details (hash (buff 32)) (version uint))
+    (map-get? version-registry {hash: hash, version: version})
+)
+
+
+
+(define-map disputes
+    { work-hash: (buff 32), disputant: principal }
+    {
+        reason: (string-utf8 500),
+        evidence: (buff 32),
+        status: (string-utf8 20),
+        filed-at: uint,
+        resolved-at: uint
+    }
+)
+
+(define-map arbitrators
+    { address: principal }
+    { active: bool }
+)
+
+(define-public (file-dispute 
+    (work-hash (buff 32))
+    (reason (string-utf8 500))
+    (evidence (buff 32)))
+    (let ((work (map-get? ip-registry {hash: work-hash})))
+        (if (is-some work)
+            (begin
+                (map-set disputes
+                    {work-hash: work-hash, disputant: tx-sender}
+                    {
+                        reason: reason,
+                        evidence: evidence,
+                        status: u"PENDING",
+                        filed-at: stacks-block-height,
+                        resolved-at: u0
+                    })
+                (ok true))
+            (err u100)
+        )
+    )
+)
+
+(define-public (resolve-dispute
+    (work-hash (buff 32))
+    (disputant principal)
+    (resolution (string-utf8 20)))
+    (let ((dispute (map-get? disputes {work-hash: work-hash, disputant: disputant}))
+          (arbitrator-status (map-get? arbitrators {address: tx-sender})))
+        (if (and 
+                (is-some dispute)
+                (is-some arbitrator-status)
+                (get active (unwrap-panic arbitrator-status)))
+            (begin
+                (map-set disputes
+                    {work-hash: work-hash, disputant: disputant}
+                    (merge (unwrap-panic dispute)
+                        {
+                            status: resolution,
+                            resolved-at: stacks-block-height
+                        }))
+                (ok true))
+            (err u101)
+        )
+    )
+)
+
+
+(define-map usage-metrics
+    { work-hash: (buff 32) }
+    {
+        views: uint,
+        shares: uint,
+        citations: uint,
+        last-updated: uint
+    }
+)
+
+(define-map platform-usage
+    { work-hash: (buff 32), platform: (string-utf8 50) }
+    {
+        usage-count: uint,
+        first-used: uint,
+        last-used: uint
+    }
+)
+
+(define-public (record-usage
+    (work-hash (buff 32))
+    (platform (string-utf8 50)))
+    (let ((current-metrics (map-get? usage-metrics {work-hash: work-hash}))
+          (platform-metrics (map-get? platform-usage {work-hash: work-hash, platform: platform})))
+        (begin
+            (map-set usage-metrics
+                {work-hash: work-hash}
+                {
+                    views: (+ (default-to u0 (get views current-metrics)) u1),
+                    shares: (default-to u0 (get shares current-metrics)),
+                    citations: (default-to u0 (get citations current-metrics)),
+                    last-updated: stacks-block-height
+                })
+            (map-set platform-usage
+                {work-hash: work-hash, platform: platform}
+                {
+                    usage-count: (+ (default-to u0 (get usage-count platform-metrics)) u1),
+                    first-used: (default-to stacks-block-height (get first-used platform-metrics)),
+                    last-used: stacks-block-height
+                })
+            (ok true)
+        )
+    )
+)
+
+
+(define-map transfer-locks
+    { hash: (buff 32) }
+    { 
+        last-transfer: uint,
+        cooling-period: uint
+    }
+)
+
+(define-data-var default-cooling-period uint u100)
+
+(define-public (set-transfer-cooling-period (hash (buff 32)) (blocks uint))
+    (let ((work (map-get? ip-registry {hash: hash})))
+        (if (and
+                (is-some work)
+                (is-eq (get owner (unwrap-panic work)) tx-sender))
+            (begin
+                (map-set transfer-locks
+                    {hash: hash}
+                    {
+                        last-transfer: stacks-block-height,
+                        cooling-period: blocks
+                    })
+                (ok true))
+            (err u200)
+        )
+    )
+)
+
+(define-read-only (can-transfer (hash (buff 32)))
+    (let ((lock-info (map-get? transfer-locks {hash: hash})))
+        (if (is-none lock-info)
+            (ok true)
+            (ok (>= stacks-block-height 
+                    (+ (get last-transfer (unwrap-panic lock-info))
+                       (get cooling-period (unwrap-panic lock-info)))))
+        )
+    )
+)
+
+
+(define-public (update-cooling-period (hash (buff 32)) (new-blocks uint))
+    (let ((work (map-get? ip-registry {hash: hash})))
+        (if (and
+                (is-some work)
+                (is-eq (get owner (unwrap-panic work)) tx-sender))
+            (begin
+                (map-set transfer-locks
+                    {hash: hash}
+                    {
+                        last-transfer: stacks-block-height,
+                        cooling-period: new-blocks
+                    })
+                (ok true))
+            (err u201)
+        )
+    )
+)
+(define-read-only (get-cooling-period (hash (buff 32)))
+    (let ((lock-info (map-get? transfer-locks {hash: hash})))
+        (if (is-some lock-info)
+            (ok (get cooling-period (unwrap-panic lock-info)))
+            (ok (var-get default-cooling-period))
+        )
+    )
+)
+(define-read-only (get-transfer-lock (hash (buff 32)))
+    (map-get? transfer-locks {hash: hash})
+)
+(define-read-only (get-default-cooling-period)
+    (var-get default-cooling-period)
+)
+
+
+(define-map verifications
+    { hash: (buff 32), verifier: principal }
+    {
+        status: (string-utf8 20),
+        timestamp: uint,
+        reputation-score: uint
+    }
+)
+
+(define-map verifier-registry
+    { address: principal }
+    {
+        name: (string-utf8 50),
+        verification-count: uint,
+        active: bool
+    }
+)
+
+(define-public (register-verifier (name (string-utf8 50)))
+    (begin
+        (map-set verifier-registry
+            {address: tx-sender}
+            {
+                name: name,
+                verification-count: u0,
+                active: true
+            })
+        (ok true)
+    )
+)
+
+(define-public (verify-work (hash (buff 32)) (status (string-utf8 20)))
+    (let ((verifier (map-get? verifier-registry {address: tx-sender})))
+        (if (and
+                (is-some verifier)
+                (get active (unwrap-panic verifier)))
+            (begin
+                (map-set verifications
+                    {hash: hash, verifier: tx-sender}
+                    {
+                        status: status,
+                        timestamp: stacks-block-height,
+                        reputation-score: u100
+                    })
+                (ok true))
+            (err u300)
+        )
+    )
+)
