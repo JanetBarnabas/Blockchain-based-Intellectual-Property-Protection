@@ -442,3 +442,127 @@
         )
     )
 )
+
+
+(define-map transfer-locks
+    { hash: (buff 32) }
+    { 
+        last-transfer: uint,
+        cooling-period: uint
+    }
+)
+
+(define-data-var default-cooling-period uint u100)
+
+(define-public (set-transfer-cooling-period (hash (buff 32)) (blocks uint))
+    (let ((work (map-get? ip-registry {hash: hash})))
+        (if (and
+                (is-some work)
+                (is-eq (get owner (unwrap-panic work)) tx-sender))
+            (begin
+                (map-set transfer-locks
+                    {hash: hash}
+                    {
+                        last-transfer: stacks-block-height,
+                        cooling-period: blocks
+                    })
+                (ok true))
+            (err u200)
+        )
+    )
+)
+
+(define-read-only (can-transfer (hash (buff 32)))
+    (let ((lock-info (map-get? transfer-locks {hash: hash})))
+        (if (is-none lock-info)
+            (ok true)
+            (ok (>= stacks-block-height 
+                    (+ (get last-transfer (unwrap-panic lock-info))
+                       (get cooling-period (unwrap-panic lock-info)))))
+        )
+    )
+)
+
+
+(define-public (update-cooling-period (hash (buff 32)) (new-blocks uint))
+    (let ((work (map-get? ip-registry {hash: hash})))
+        (if (and
+                (is-some work)
+                (is-eq (get owner (unwrap-panic work)) tx-sender))
+            (begin
+                (map-set transfer-locks
+                    {hash: hash}
+                    {
+                        last-transfer: stacks-block-height,
+                        cooling-period: new-blocks
+                    })
+                (ok true))
+            (err u201)
+        )
+    )
+)
+(define-read-only (get-cooling-period (hash (buff 32)))
+    (let ((lock-info (map-get? transfer-locks {hash: hash})))
+        (if (is-some lock-info)
+            (ok (get cooling-period (unwrap-panic lock-info)))
+            (ok (var-get default-cooling-period))
+        )
+    )
+)
+(define-read-only (get-transfer-lock (hash (buff 32)))
+    (map-get? transfer-locks {hash: hash})
+)
+(define-read-only (get-default-cooling-period)
+    (var-get default-cooling-period)
+)
+
+
+(define-map verifications
+    { hash: (buff 32), verifier: principal }
+    {
+        status: (string-utf8 20),
+        timestamp: uint,
+        reputation-score: uint
+    }
+)
+
+(define-map verifier-registry
+    { address: principal }
+    {
+        name: (string-utf8 50),
+        verification-count: uint,
+        active: bool
+    }
+)
+
+(define-public (register-verifier (name (string-utf8 50)))
+    (begin
+        (map-set verifier-registry
+            {address: tx-sender}
+            {
+                name: name,
+                verification-count: u0,
+                active: true
+            })
+        (ok true)
+    )
+)
+
+(define-public (verify-work (hash (buff 32)) (status (string-utf8 20)))
+    (let ((verifier (map-get? verifier-registry {address: tx-sender})))
+        (if (and
+                (is-some verifier)
+                (get active (unwrap-panic verifier)))
+            (begin
+                (map-set verifications
+                    {hash: hash, verifier: tx-sender}
+                    {
+                        status: status,
+                        timestamp: stacks-block-height,
+                        reputation-score: u100
+                    })
+                (ok true))
+            (err u300)
+        )
+    )
+)
