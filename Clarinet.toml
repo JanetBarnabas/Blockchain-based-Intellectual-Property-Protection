@@ -9,6 +9,17 @@ requirements = []
 path = 'contracts/protection.clar'
 clarity_version = 3
 epoch = 3.1
+
+[contracts.royalty-distribution]
+path = 'contracts/royalty-distribution.clar'
+clarity_version = 3
+epoch = 3.1
+
+[contracts.reputation-system]
+path = 'contracts/reputation-system.clar'
+clarity_version = 3
+epoch = 3.1
+
 [repl.analysis]
 passes = ['check_checker']
 
