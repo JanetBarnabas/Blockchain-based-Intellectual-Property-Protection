@@ -170,24 +170,6 @@
     )
 )
 
-;; (define-public (batch-distribute-payments (work-hash (buff 32)) (participant-list (list 10 principal)) (total-amount uint))
-;;     (let (
-;;         (pool (map-get? royalty-pools {work-hash: work-hash}))
-;;     )
-;;         (if (is-some pool)
-;;             (begin
-;;                 (map distribute-single-participant 
-;;                      (map (lambda (p) {participant: p, work-hash: work-hash, amount: total-amount}) participant-list))
-;;                 (map-set royalty-pools
-;;                     {work-hash: work-hash}
-;;                     (merge (unwrap-panic pool)
-;;                            {total-distributed: (+ (get total-distributed (unwrap-panic pool)) total-amount)}))
-;;                 (ok true)
-;;             )
-;;             (err u402)
-;;         )
-;;     )
-;; )
 
 (define-private (distribute-single-participant (data {participant: principal, work-hash: (buff 32), amount: uint}))
     (distribute-to-participant (get work-hash data) (get participant data) (get amount data))
